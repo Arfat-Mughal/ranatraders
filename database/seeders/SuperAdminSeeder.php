@@ -16,7 +16,7 @@ class SuperAdminSeeder extends Seeder
         $users = [
             [
                 'name' => 'Super Admin',
-                'email' => 'Super@gmail',
+                'email' => 'Super@gmail.com',
                 'password' => 'password123',
                 'role' => 'Super Admin'
             ],
