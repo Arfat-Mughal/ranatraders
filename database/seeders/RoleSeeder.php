@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 
@@ -13,23 +12,36 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
-        Role::create(['name' => 'Super Admin']);
-        $admin = Role::create(['name' => 'Admin']);
-        $productManager = Role::create(['name' => 'Product Manager']);
+        $rolesWithPermissions = [
+            'Super Admin' => [
+                'create-role',
+                'edit-role',
+                'delete-role',
+                'create-user',
+                'edit-user',
+                'delete-user',
+                'create-product',
+                'edit-product',
+                'delete-product'
+            ],
+            'Admin' => [
+                'create-user',
+                'edit-user',
+                'delete-user',
+                'create-product',
+                'edit-product',
+                'delete-product'
+            ],
+            'Manager' => [
+                'create-product',
+                'edit-product',
+                'delete-product'
+            ],
+        ];
 
-        $admin->givePermissionTo([
-            'create-user',
-            'edit-user',
-            'delete-user',
-            'create-product',
-            'edit-product',
-            'delete-product'
-        ]);
-
-        $productManager->givePermissionTo([
-            'create-product',
-            'edit-product',
-            'delete-product'
-        ]);
+        foreach ($rolesWithPermissions as $roleName => $permissions) {
+            $role = Role::create(['name' => $roleName]);
+            $role->givePermissionTo($permissions);
+        }
     }
 }
