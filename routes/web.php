@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\GuestController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProductController;
+use Illuminate\Support\Facades\Auth;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,6 +26,8 @@ Route::get('/', function () {
 Auth::routes(['register' => false]);
 
 Route::get('/home', [HomeController::class, 'index'])->name('home');
+Route::post('/subscribe',  [GuestController::class, 'subscribe'])->name('subscribe');
+Route::post('/contact', [GuestController::class, 'store'])->name('contact.store');
 
 Route::resources([
     'roles' => RoleController::class,
