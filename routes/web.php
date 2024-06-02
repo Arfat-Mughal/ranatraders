@@ -23,7 +23,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Auth::routes(['register' => false]);
+Auth::routes(['register' => false,'reset' => false]);
 
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 Route::post('/subscribe',  [GuestController::class, 'subscribe'])->name('subscribe');
