@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\GuestController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
@@ -23,7 +25,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Auth::routes(['register' => false,'reset' => false]);
+Auth::routes(['register' => false, 'reset' => false]);
 
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 Route::post('/subscribe',  [GuestController::class, 'subscribe'])->name('subscribe');
@@ -33,4 +35,6 @@ Route::resources([
     'roles' => RoleController::class,
     'users' => UserController::class,
     'products' => ProductController::class,
+    'companies' => CompanyController::class,
+    'customers' => CustomerController::class,
 ]);
