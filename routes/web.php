@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\GuestController;
 use Illuminate\Support\Facades\Route;
@@ -30,6 +31,8 @@ Auth::routes(['register' => false, 'reset' => false]);
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 Route::post('/subscribe',  [GuestController::class, 'subscribe'])->name('subscribe');
 Route::post('/contact', [GuestController::class, 'store'])->name('contact.store');
+
+Route::resource('contacts', ContactController::class)->only(['index', 'destroy', 'show']);
 
 Route::resources([
     'roles' => RoleController::class,

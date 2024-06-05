@@ -8,8 +8,8 @@
                     <img src="{{ asset('images/ranatraders.png') }}" alt="Logo" class="img-fluid" style="height: 100px;">
                 </div>
                 <div class="card shadow-sm">
-                    <div class="card-body p-3Q">
-                        <h3 class="card-title text-center mb-4">RANA TRADERS</h3>
+                    <div class="card-body p-5">
+                        <h3 class="card-title text-center mb-4">RANA TRADERS PRIVATE LIMITED</h3>
                         <form method="POST" action="{{ route('login') }}">
                             @csrf
                             <div class="mb-3">
