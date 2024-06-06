@@ -32,7 +32,6 @@ class CustomerController extends Controller
             'address' => 'nullable|string',
             'phone' => 'nullable|string',
             'email' => 'nullable|email',
-            'company_id' => 'required|exists:companies,id',
         ]);
 
         Customer::create($request->all());
@@ -58,7 +57,6 @@ class CustomerController extends Controller
             'address' => 'nullable|string',
             'phone' => 'nullable|string',
             'email' => 'nullable|email',
-            'company_id' => 'required|exists:companies,id',
         ]);
 
         $customer->update($request->all());
