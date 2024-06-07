@@ -9,6 +9,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Auth;
 
 /*
@@ -40,4 +41,5 @@ Route::resources([
     'products' => ProductController::class,
     'companies' => CompanyController::class,
     'customers' => CustomerController::class,
+    'transactions' => TransactionController::class,
 ]);
