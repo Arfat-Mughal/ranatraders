@@ -1,15 +1,16 @@
 <?php
 
-use App\Http\Controllers\CompanyController;
-use App\Http\Controllers\ContactController;
-use App\Http\Controllers\CustomerController;
-use App\Http\Controllers\GuestController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\GuestController;
+use App\Http\Controllers\ImageController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProductController;
-use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\CustomerController;
 use Illuminate\Support\Facades\Auth;
 
 /*
@@ -18,28 +19,40 @@ use Illuminate\Support\Facades\Auth;
 |--------------------------------------------------------------------------
 |
 | Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
+| routes are loaded by the RouteServiceProvider and assigned to the "web"
+| middleware group. Now create something great!
 |
 */
 
+// Public routes
 Route::get('/', function () {
     return view('welcome');
 });
 
-Auth::routes(['register' => false, 'reset' => false]);
-
-Route::get('/home', [HomeController::class, 'index'])->name('home');
-Route::post('/subscribe',  [GuestController::class, 'subscribe'])->name('subscribe');
+Route::post('/subscribe', [GuestController::class, 'subscribe'])->name('subscribe');
 Route::post('/contact', [GuestController::class, 'store'])->name('contact.store');
 
-Route::resource('contacts', ContactController::class)->only(['index', 'destroy', 'show']);
+// Authentication routes
+Auth::routes(['register' => false, 'reset' => false]);
 
-Route::resources([
-    'roles' => RoleController::class,
-    'users' => UserController::class,
-    'products' => ProductController::class,
-    'companies' => CompanyController::class,
-    'customers' => CustomerController::class,
-    'transactions' => TransactionController::class,
-]);
+// Authenticated user routes
+Route::middleware('auth')->group(function () {
+    Route::get('/home', [HomeController::class, 'index'])->name('home');
+
+    Route::delete('/images/{image}', [ImageController::class, 'destroy'])->name('images.destroy');
+
+    Route::get('transactions/export', [TransactionController::class, 'export'])->name('transactions.export');
+    Route::post('transactions/import', [TransactionController::class, 'import'])->name('transactions.import');
+
+    Route::resource('contacts', ContactController::class)->only(['index', 'destroy', 'show']);
+
+    Route::resources([
+        'roles' => RoleController::class,
+        'users' => UserController::class,
+        'products' => ProductController::class,
+        'companies' => CompanyController::class,
+        'customers' => CustomerController::class,
+        'transactions' => TransactionController::class,
+    ]);
+});
+

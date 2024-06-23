@@ -14,17 +14,18 @@ return new class extends Migration
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->date('date');
             $table->string('payment_method');
             $table->text('other_detail')->nullable();
-            $table->string('truck_no');
-            $table->decimal('weight', 8, 2);
-            $table->decimal('rate', 8, 2);
-            $table->decimal('gravity', 5, 2);
-            $table->string('letter');
-            $table->decimal('debit', 8, 2)->nullable();
-            $table->decimal('credit', 8, 2)->nullable();
-            $table->decimal('balance', 8, 2);
+            $table->string('truck_no')->nullable();
+            $table->decimal('weight', 12, 2)->nullable();
+            $table->decimal('rate', 12, 2)->nullable();
+            $table->decimal('gravity', 5, 2)->nullable();
+            $table->string('letter')->nullable();
+            $table->decimal('debit', 12, 2)->nullable();
+            $table->decimal('credit', 12, 2)->nullable();
+            $table->decimal('balance', 12, 2);
             $table->timestamps();
         });
     }

@@ -13,7 +13,6 @@
                     <tr>
                         <th scope="col">Sr.No</th>
                         <th scope="col">Name</th>
-                        <th scope="col">Address</th>
                         <th scope="col">Phone</th>
                         <th scope="col">Email</th>
                         <th scope="col">Actions</th>
@@ -24,7 +23,6 @@
                         <tr>
                             <td>{{ $loop->iteration }}</td>
                             <td>{{ $company->name }}</td>
-                            <td>{{ $company->address }}</td>
                             <td>{{ $company->phone }}</td>
                             <td>{{ $company->email }}</td>
                             <td>
