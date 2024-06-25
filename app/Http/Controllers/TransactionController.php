@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\TransactionCreated;
+use App\Events\TransactionDeleted;
 use App\Exports\TransactionsExport;
 use App\Imports\TransactionsImport;
 use App\Models\Transaction;
@@ -118,31 +120,21 @@ class TransactionController extends Controller
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
-    
-        // Get the latest balance for the company
-        $latestTransaction = Transaction::where('company_id', $request->company_id)
-            ->orderBy('created_at', 'desc')
-            ->first();
-    
-        $current_balance = $latestTransaction ? $latestTransaction->balance : 0;
-    
-        // Adjust the balance based on debit and credit
-        $new_balance = $current_balance;
-    
-        if ($request->filled('debit')) {
-            $new_balance -= $request->debit;
-        }
-    
-        if ($request->filled('credit')) {
-            $new_balance += $request->credit;
-        }
-    
+
         // Add the calculated balance to the validated data
-        $data['balance'] = $new_balance;
+        $data['balance'] = 0;
         $data['user_id'] = Auth::id(); // Set the user_id to the authenticated user's ID
     
         // Create the transaction
         $transaction = Transaction::create($data);
+
+        activity('transaction')
+            ->performedOn($transaction)
+            ->causedBy(Auth::user())
+            ->withProperties($data)
+            ->log('created');
+
+        event(new TransactionCreated($transaction));
     
         // Handle image uploads
         if ($request->hasFile('images')) {
@@ -152,8 +144,8 @@ class TransactionController extends Controller
             }
         }
     
-        return redirect()->route('transactions.index')
-            ->with('success', 'Transaction created successfully.');
+        return redirect()->route('transactions.index', ['company_id' => $request->company_id])
+        ->with('success', 'Transaction created successfully.');
     }
 
     public function show(Transaction $transaction)
@@ -200,29 +192,16 @@ class TransactionController extends Controller
         return redirect()->back()->withErrors($validator)->withInput();
     }
 
-    // Get the latest balance for the company
-    $latestTransaction = Transaction::where('company_id', $request->company_id)
-        ->orderBy('created_at', 'desc')
-        ->first();
-
-    $current_balance = $latestTransaction ? $latestTransaction->balance : 0;
-
-    // Adjust the balance based on debit and credit
-    $new_balance = $current_balance;
-
-    if ($request->filled('debit')) {
-        $new_balance -= $request->debit;
-    }
-
-    if ($request->filled('credit')) {
-        $new_balance += $request->credit;
-    }
-
-    // Add the calculated balance to the validated data
-    $data['balance'] = $new_balance;
-
-    // Update the transaction
     $transaction->update($data);
+
+
+    activity('transaction')
+            ->performedOn($transaction)
+            ->causedBy(Auth::user())
+            ->withProperties($data)
+            ->log('updated');
+
+    event(new TransactionCreated($transaction));
 
     if ($request->hasFile('images')) {
         foreach ($request->file('images') as $image) {
@@ -231,14 +210,22 @@ class TransactionController extends Controller
         }
     }
 
-    return redirect()->route('transactions.index')
+    return redirect()->route('transactions.index', ['company_id' => $request->company_id])
         ->with('success', 'Transaction updated successfully.');
 }
 
     public function destroy(Transaction $transaction)
     {
-        $transaction->delete();
-        return redirect()->route('transactions.index')
+
+        activity('transaction')
+        ->performedOn($transaction)
+        ->causedBy(Auth::user())
+        ->withProperties($transaction)
+        ->log('deleted');
+
+        event(new TransactionDeleted($transaction));
+
+        return redirect()->back()
             ->with('success', 'Transaction deleted successfully.');
     }
 }
