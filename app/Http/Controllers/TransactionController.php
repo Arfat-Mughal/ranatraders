@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Validators\ValidationException;
 
 class TransactionController extends Controller
 {
@@ -61,24 +62,33 @@ class TransactionController extends Controller
     return Excel::download(new TransactionsExport($company_id, $start_date, $end_date), $filename);
     }
 
-
     public function import(Request $request)
-    {
-        $request->validate([
-            'file' => 'required|mimes:xlsx,xls|max:2048', // Ensure file is Excel format and within size limits
-        ]);
-    
-        try {
-            $file = $request->file('file');
-    
-            // Handle file upload and import
-            Excel::import(new TransactionsImport($request->company_id), $file);
-    
-            return redirect()->back()->with('success', 'Transactions imported successfully!');
-        } catch (\Exception $e) {
-            return redirect()->back()->withErrors('Error importing file: ' . $e->getMessage());
+{
+    $request->validate([
+        'file' => 'required|mimes:xlsx,xls|max:2048', // Ensure file is Excel format and within size limits
+    ]);
+
+    try {
+        $file = $request->file('file');
+
+        // Handle file upload and import
+        Excel::import(new TransactionsImport($request->company_id), $file);
+
+        return redirect()->back()->with('success', 'Transactions imported successfully!');
+    } catch (ValidationException $e) {
+        $failures = $e->failures();
+        $errorMessages = [];
+
+        foreach ($failures as $failure) {
+            $errorMessages[] = 'Row ' . $failure->row() . ': ' . implode(', ', $failure->errors());
         }
+
+        return redirect()->back()->withErrors(['import_errors' => $errorMessages]);
+    } catch (\Exception $e) {
+        return redirect()->back()->withErrors('Error importing file: ' . $e->getMessage());
     }
+}
+    
 
 
     public function create()

@@ -32,7 +32,7 @@ class TransactionsExport implements FromCollection, WithHeadings
         }
 
         return $query->with('company')
-                     ->orderBy('date', 'desc')
+                     ->orderBy('date', 'asc')
                      ->get()
                      ->map(function($transaction) {
             return [
@@ -48,7 +48,6 @@ class TransactionsExport implements FromCollection, WithHeadings
                 'Debit' => $transaction->debit,
                 'Credit' => $transaction->credit,
                 'Balance' => $transaction->balance,
-                'Company' => $transaction->company->name,
             ];
         });
     }
@@ -68,7 +67,6 @@ class TransactionsExport implements FromCollection, WithHeadings
             'Debit',
             'Credit',
             'Balance',
-            'Company',
         ];
     }
 }
