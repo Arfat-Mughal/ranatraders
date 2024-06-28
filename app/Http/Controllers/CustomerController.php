@@ -13,16 +13,25 @@ class CustomerController extends Controller
         $this->middleware('auth');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $customers = Customer::all();
+        $query = Customer::query();
+
+        if ($request->has('search')) {
+            $search = $request->input('search');
+            $query->where('name', 'like', "%{$search}%")
+                ->orWhere('phone', 'like', "%{$search}%");
+        }
+
+        $customers = $query->paginate(20);
+
         return view('customers.index', compact('customers'));
     }
 
+
     public function create()
     {
-        $companies = Company::all();
-        return view('customers.create', compact('companies'));
+        return view('customers.create');
     }
 
     public function store(Request $request)

@@ -93,15 +93,17 @@ class TransactionController extends Controller
     {
         $companies = Company::all();
         $customers = Customer::all();
-        return view('transactions.create', compact('companies','customers'));
+        return view('transactions.create', compact('companies', 'customers'));
     }
 
     public function store(Request $request)
     {
         // Validate the request data
-        $data = $request->validate([
+        $validatedData = $request->validate([
             'company_id' => 'required|exists:companies,id',
             'date' => 'nullable|date',
+            'from_customer' => 'required|numeric',
+            'to_customer' => 'required|numeric',
             'payment_method' => 'required|string',
             'other_detail' => 'nullable|string',
             'truck_no' => 'nullable|string',
@@ -113,78 +115,107 @@ class TransactionController extends Controller
             'credit' => 'nullable|numeric',
             'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
-    
-        // Custom validation to ensure either debit or credit is provided
+
+        // Custom validation: Either debit or credit is required
         $validator = Validator::make($request->all(), [
             'debit' => 'nullable|numeric',
             'credit' => 'nullable|numeric',
         ]);
-    
+
         $validator->after(function ($validator) use ($request) {
             if (is_null($request->debit) && is_null($request->credit)) {
                 $validator->errors()->add('debit', 'Either debit or credit is required.');
             }
         });
-    
+
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
-    
-        // Use the current date if no date is provided
-        $data['date'] = $request->input('date', Carbon::now()->format('Y-m-d'));
-    
-        // Check if the date is the current date
-        if ($data['date'] === Carbon::now()->format('Y-m-d')) {
+
+        // Set the date to current date if not provided
+        $validatedData['date'] = $validatedData['date'] ?? Carbon::now()->format('Y-m-d');
+
+        // Calculate the balance
+        $validatedData['balance'] = $this->calculateBalance($request, $validatedData);
+
+        // Set the user_id to the authenticated user's ID
+        $validatedData['user_id'] = Auth::id();
+
+        // Create the transaction
+        $transaction = Transaction::create($validatedData);
+
+        // Log activity
+        activity('transaction')
+            ->performedOn($transaction)
+            ->causedBy(Auth::user())
+            ->withProperties($validatedData)
+            ->log('created');
+
+        // Trigger event for non-current date transactions
+        if ($validatedData['date'] !== Carbon::now()->format('Y-m-d')) {
+            event(new TransactionCreated($transaction));
+        }
+
+        // Handle image uploads
+        $this->handleImageUploads($request, $transaction);
+
+        // Redirect with success message
+        return redirect()->route('transactions.index', ['company_id' => $validatedData['company_id']])
+            ->with('success', 'Transaction created successfully.');
+    }
+
+    /**
+     * Calculate the balance based on debit and credit values.
+     *
+     * @param Request $request
+     * @param array $validatedData
+     * @return float
+     */
+    private function calculateBalance(Request $request, array $validatedData): float
+    {
+        if ($validatedData['date'] === Carbon::now()->format('Y-m-d')) {
             // Get the latest balance for the company
             $latestTransaction = Transaction::where('company_id', $request->company_id)
                 ->orderBy('created_at', 'desc')
                 ->first();
-    
-            $current_balance = $latestTransaction ? $latestTransaction->balance : 0;
-    
+
+            $currentBalance = $latestTransaction ? $latestTransaction->balance : 0;
+
             // Adjust the balance based on debit and credit
-            $new_balance = $current_balance;
-    
+            $newBalance = $currentBalance;
+
             if ($request->filled('debit')) {
-                $new_balance -= $request->debit;
+                $newBalance -= $request->debit;
             }
-    
+
             if ($request->filled('credit')) {
-                $new_balance += $request->credit;
+                $newBalance += $request->credit;
             }
-    
-            // Add the calculated balance to the validated data
-            $data['balance'] = $new_balance;
-        } else {
-            $data['balance'] = 0; // Default balance for non-current dates
+
+            return $newBalance;
         }
-    
-        $data['user_id'] = Auth::id(); // Set the user_id to the authenticated user's ID
-    
-        // Create the transaction
-        $transaction = Transaction::create($data);
-    
-        activity('transaction')
-            ->performedOn($transaction)
-            ->causedBy(Auth::user())
-            ->withProperties($data)
-            ->log('created');
-    
-        if ($data['date'] !== Carbon::now()->format('Y-m-d')) {
-            event(new TransactionCreated($transaction));
-        }
-    
-        // Handle image uploads
+
+        // Default balance for non-current dates
+        return 0;
+    }
+
+    /**
+     * Handle image uploads for the transaction.
+     *
+     * @param Request $request
+     * @param Transaction $transaction
+     * @return void
+     */
+    private function handleImageUploads(Request $request, Transaction $transaction): void
+    {
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $imageFile) {
                 $imagePath = $imageFile->store('images', 'public');
                 $transaction->images()->create(['path' => $imagePath]);
             }
         }
-    
-        return redirect()->route('transactions.index', ['company_id' => $request->company_id])
-            ->with('success', 'Transaction created successfully.');
     }
+
 
     public function show(Transaction $transaction)
     {
