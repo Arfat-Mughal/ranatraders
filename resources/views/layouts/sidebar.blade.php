@@ -10,23 +10,28 @@
             </a>
         </li><!-- End Dashboard Nav -->
 
-        {{-- <li class="nav-item">
+        <li class="nav-item">
       <a class="nav-link collapsed" data-bs-target="#components-nav" data-bs-toggle="collapse" href="#">
-        <i class="bi bi-menu-button-wide"></i><span>Components</span><i class="bi bi-chevron-down ms-auto"></i>
+        <i class="bi bi-menu-button-wide"></i><span>All Pumps</span><i class="bi bi-chevron-down ms-auto"></i>
       </a>
       <ul id="components-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
         <li>
           <a href="components-alerts.html">
-            <i class="bi bi-circle"></i><span>Alerts</span>
+            <i class="bi bi-circle"></i><span>Pumps Accounts</span>
           </a>
         </li>
         <li>
           <a href="components-modal.html">
-            <i class="bi bi-circle"></i><span>Modal</span>
+            <i class="bi bi-circle"></i><span>Pumps Expenses</span>
+          </a>
+        </li>
+        <li>
+          <a href="components-modal.html">
+            <i class="bi bi-circle"></i><span>Pumps Reading</span>
           </a>
         </li>
       </ul>
-    </li><!-- End Components Nav --> --}}
+    </li><!-- End Components Nav -->
 
         <li class="nav-heading">Syatem Information</li>
 

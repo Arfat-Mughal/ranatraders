@@ -40,7 +40,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home');
 
     Route::delete('/images/{image}', [ImageController::class, 'destroy'])->name('images.destroy');
-
+    
     Route::get('transactions/export', [TransactionController::class, 'export'])->name('transactions.export');
     Route::post('transactions/import', [TransactionController::class, 'import'])->name('transactions.import');
 

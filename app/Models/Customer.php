@@ -14,11 +14,10 @@ class Customer extends Model
         'address',
         'phone',
         'email',
-        'company_id'
     ];
 
-    public function company()
+    public function companies()
     {
-        return $this->belongsTo(Company::class);
+        return $this->belongsToMany(Company::class, 'company_customer');
     }
 }
