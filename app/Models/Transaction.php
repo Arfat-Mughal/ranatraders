@@ -36,5 +36,14 @@ class Transaction extends Model
     {
         return $this->morphMany(Image::class, 'imageable');
     }
-}
 
+    public function from_customers()
+    {
+        return $this->belongsTo(Customer::class, 'from_customer');
+    }
+
+    public function to_customers()
+    {
+        return $this->belongsTo(Customer::class, 'to_customer');
+    }
+}

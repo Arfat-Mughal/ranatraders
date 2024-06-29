@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\TransactionCreated;
-use App\Events\TransactionDeleted;
 use App\Exports\TransactionsExport;
 use App\Imports\TransactionsImport;
 use App\Models\Transaction;
@@ -21,13 +19,14 @@ class TransactionController extends Controller
     public function index(Request $request)
     {
         $companies = Company::all();
+        $customers = Customer::all();
 
-        $transactions = Transaction::query();
+        // Initialize a new query builder instance
+        $transactions = Transaction::with('from_customers', 'to_customers')->newQuery();
 
         if ($request->has('company_id')) {
             $transactions->where('company_id', $request->company_id);
         } else {
-            // If company_id is not provided, return empty array
             $transactions->where('company_id', null);
         }
 
@@ -39,10 +38,20 @@ class TransactionController extends Controller
             $transactions->where('date', '<=', $request->end_date);
         }
 
+        if ($request->has('from_customer') && $request->from_customer) {
+            $transactions->where('from_customer', $request->from_customer);
+        }
+
+        if ($request->has('to_customer') && $request->to_customer) {
+            $transactions->where('to_customer', $request->to_customer);
+        }
+
         $transactions = $transactions->orderBy('date', 'desc')->paginate(20);
 
-        return view('transactions.index', compact('transactions', 'companies'));
+        return view('transactions.index', compact('transactions', 'companies', 'customers'));
     }
+
+
 
     public function export(Request $request)
     {
@@ -98,7 +107,6 @@ class TransactionController extends Controller
 
     public function store(Request $request)
     {
-        // Validate the request data
         $validatedData = $request->validate([
             'company_id' => 'required|exists:companies,id',
             'date' => 'nullable|date',
@@ -116,7 +124,6 @@ class TransactionController extends Controller
             'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
-        // Custom validation: Either debit or credit is required
         $validator = Validator::make($request->all(), [
             'debit' => 'nullable|numeric',
             'credit' => 'nullable|numeric',
@@ -132,100 +139,24 @@ class TransactionController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        // Set the date to current date if not provided
         $validatedData['date'] = $validatedData['date'] ?? Carbon::now()->format('Y-m-d');
 
-        // Calculate the balance
-        $validatedData['balance'] = $this->calculateBalance($request, $validatedData);
 
-        // Set the user_id to the authenticated user's ID
         $validatedData['user_id'] = Auth::id();
 
-        // Create the transaction
         $transaction = Transaction::create($validatedData);
 
-        // Log activity
         activity('transaction')
             ->performedOn($transaction)
             ->causedBy(Auth::user())
             ->withProperties($validatedData)
             ->log('created');
 
-        // Trigger event for non-current date transactions
-        if ($validatedData['date'] !== Carbon::now()->format('Y-m-d')) {
-            event(new TransactionCreated($transaction));
-        }
 
-        // Handle image uploads
         $this->handleImageUploads($request, $transaction);
 
-        // Redirect with success message
         return redirect()->route('transactions.index', ['company_id' => $validatedData['company_id']])
             ->with('success', 'Transaction created successfully.');
-    }
-
-    /**
-     * Calculate the balance based on debit and credit values.
-     *
-     * @param Request $request
-     * @param array $validatedData
-     * @return float
-     */
-    private function calculateBalance(Request $request, array $validatedData): float
-    {
-        if ($validatedData['date'] === Carbon::now()->format('Y-m-d')) {
-            // Get the latest balance for the company
-            $latestTransaction = Transaction::where('company_id', $request->company_id)
-                ->orderBy('created_at', 'desc')
-                ->first();
-
-            $currentBalance = $latestTransaction ? $latestTransaction->balance : 0;
-
-            // Adjust the balance based on debit and credit
-            $newBalance = $currentBalance;
-
-            if ($request->filled('debit')) {
-                $newBalance -= $request->debit;
-            }
-
-            if ($request->filled('credit')) {
-                $newBalance += $request->credit;
-            }
-
-            return $newBalance;
-        }
-
-        // Default balance for non-current dates
-        return 0;
-    }
-
-    /**
-     * Handle image uploads for the transaction.
-     *
-     * @param Request $request
-     * @param Transaction $transaction
-     * @return void
-     */
-    private function handleImageUploads(Request $request, Transaction $transaction): void
-    {
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $imageFile) {
-                $imagePath = $imageFile->store('images', 'public');
-                $transaction->images()->create(['path' => $imagePath]);
-            }
-        }
-    }
-
-
-    public function show(Transaction $transaction)
-    {
-        return view('transactions.show', compact('transaction'));
-    }
-
-    public function edit(Transaction $transaction)
-    {
-        $companies = Company::all();
-        return view('transactions.edit', compact('transaction', 'companies'));
     }
 
     public function update(Request $request, Transaction $transaction)
@@ -270,8 +201,6 @@ class TransactionController extends Controller
             ->withProperties($data)
             ->log('updated');
 
-        event(new TransactionCreated($transaction));
-
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
                 $path = $image->store('images', 'public');
@@ -283,6 +212,35 @@ class TransactionController extends Controller
             ->with('success', 'Transaction updated successfully.');
     }
 
+    /**
+     * Handle image uploads for the transaction.
+     *
+     * @param Request $request
+     * @param Transaction $transaction
+     * @return void
+     */
+    private function handleImageUploads(Request $request, Transaction $transaction): void
+    {
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $imageFile) {
+                $imagePath = $imageFile->store('images', 'public');
+                $transaction->images()->create(['path' => $imagePath]);
+            }
+        }
+    }
+
+
+    public function show(Transaction $transaction)
+    {
+        return view('transactions.show', compact('transaction'));
+    }
+
+    public function edit(Transaction $transaction)
+    {
+        $companies = Company::all();
+        return view('transactions.edit', compact('transaction', 'companies'));
+    }
+
     public function destroy(Transaction $transaction)
     {
 
@@ -292,7 +250,7 @@ class TransactionController extends Controller
             ->withProperties($transaction)
             ->log('deleted');
 
-        event(new TransactionDeleted($transaction));
+        $transaction->delete();
 
         return redirect()->back()
             ->with('success', 'Transaction deleted successfully.');

@@ -23,11 +23,10 @@ return new class extends Migration
             $table->string('truck_no')->nullable();
             $table->decimal('weight', 12, 2)->nullable();
             $table->decimal('rate', 12, 2)->nullable();
-            $table->decimal('gravity', 5, 2)->nullable();
+            $table->decimal('gravity', 12, 2)->nullable();
             $table->string('letter')->nullable();
             $table->decimal('debit', 12, 2)->nullable();
             $table->decimal('credit', 12, 2)->nullable();
-            $table->decimal('balance', 12, 2);
             $table->timestamps();
         });
     }
