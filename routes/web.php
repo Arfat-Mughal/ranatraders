@@ -11,6 +11,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\RecordController;
 use Illuminate\Support\Facades\Auth;
 
@@ -45,7 +46,13 @@ Route::middleware('auth')->group(function () {
     Route::get('transactions/export', [TransactionController::class, 'export'])->name('transactions.export');
     Route::post('transactions/import', [TransactionController::class, 'import'])->name('transactions.import');
 
+    Route::get('records/export', [RecordController::class, 'export'])->name('records.export');
+    Route::post('records/import', [RecordController::class, 'import'])->name('records.import');
+
     Route::resource('contacts', ContactController::class)->only(['index', 'destroy', 'show']);
+
+    Route::post('expenses/import', [ExpenseController::class, 'import'])->name('expenses.import');
+    Route::get('expenses/export', [ExpenseController::class, 'export'])->name('expenses.export');
 
     Route::resources([
         'roles' => RoleController::class,
@@ -54,6 +61,7 @@ Route::middleware('auth')->group(function () {
         'companies' => CompanyController::class,
         'customers' => CustomerController::class,
         'transactions' => TransactionController::class,
-        'records' => RecordController::class
+        'records' => RecordController::class,
+        'expenses' => ExpenseController::class
     ]);
 });

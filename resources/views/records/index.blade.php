@@ -10,7 +10,7 @@
                         value="{{ request('search') }}">
                 </div>
                 <div class="col-md-3">
-                    <select name="company_id" class="form-select">
+                    <select name="company_id" id="company_id" class="form-select" onchange="this.form.submit()">
                         <option value="">Select Company</option>
                         @foreach ($companies as $company)
                             <option value="{{ $company->id }}"
@@ -50,7 +50,27 @@
                 </div>
             </div>
         </form>
-        <a href="{{ route('records.create') }}" class="btn btn-primary mb-3">Create New Record</a>
+
+        <div class="row d-flex">
+            <div class="col-3">
+                <a href="{{ route('records.create') }}" class="btn btn-primary mb-3">Create New Record</a>
+            </div>
+            @if (request('company_id'))
+                <div class="col-3" id="export-import-buttons">
+                    <a href="{{ route('records.export', ['company_id' => request('company_id')]) }}"
+                        class="btn btn-success">Export to Excel</a>
+                </div>
+                <div class="col-6">
+                    <form method="POST" action="{{ route('records.import') }}" enctype="multipart/form-data"
+                        class="d-inline">
+                        @csrf
+                        <input type="file" name="file" class="form-control-file d-inline" required>
+                        <button type="submit" class="btn btn-primary">Import from Excel</button>
+                    </form>
+                </div>
+            @endif
+        </div>
+
         <table class="table table-bordered">
             <thead class="thead-light">
                 <tr>

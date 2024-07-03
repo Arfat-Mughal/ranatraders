@@ -21,7 +21,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="components-modal.html">
+                    <a href="{{ route('expenses.index') }}">
                         <i class="bi bi-circle"></i><span>Pumps Expenses</span>
                     </a>
                 </li>

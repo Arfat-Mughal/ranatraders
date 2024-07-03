@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\RecordsExport;
+use App\Imports\RecordsImport;
 use App\Models\Company;
 use App\Models\Record;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class RecordController extends Controller
 {
@@ -97,5 +100,23 @@ class RecordController extends Controller
         $record->delete();
 
         return redirect()->route('records.index')->with('success', 'Record deleted successfully.');
+    }
+
+
+    public function export(Request $request)
+    {
+        $companyId = $request->company_id;
+        return Excel::download(new RecordsExport($companyId), 'records.xlsx');
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx',
+        ]);
+
+        Excel::import(new RecordsImport, $request->file('file'));
+
+        return redirect()->route('records.index')->with('success', 'Records imported successfully.');
     }
 }
